@@ -1,53 +1,51 @@
 import React, { Component } from "react";
-import UserDataService from "../services/user.service";
+import StudentDataService from '../services/student.service'
 import { Link } from "react-router-dom";
 import dateFormat from "dateformat";
 import NumberFormat from 'react-number-format';
 
+// redux
+import { connect } from 'react-redux'
+import { retrieveStudents, deleteStudent } from "../actions/student.action";
 
-export default class ListUser extends Component {
+
+class ListStudent extends Component {
   constructor(props) {
     super(props);
-    this.getUsers = this.getUsers.bind(this);
-    this.deleteUser = this.deleteUser.bind(this);
+    this.getStudents = this.getStudents.bind(this);
+    this.deleteStudent = this.deleteStudent.bind(this);
 
     this.state = {
-      users: []
+      students: []
     };
   }
 
   componentDidMount() {
-    this.getUsers();
+    this.getStudents()
   }
 
-  getUsers() {
-    UserDataService.getAll()
-      .then(res => {
-        this.setState({
-          users: res.data
-        });
-      })
-      .catch(e => console.error(e))
+  getStudents() {
+    this.props.retrieveStudents()
   }
 
-  deleteUser(id) {
-    UserDataService.delete(id)
+  deleteStudent(id) {
+    this.props.deleteStudent(id)
       .then(res => {
         alert('Berhasil hapus data')
-        this.props.history.push('/users')
+        this.props.history.push('/students')
       }).catch(e => {
-        alert('Gagal hapus data')
-        console.error(e)
+        alert('gagal hapus data')
+        console.log('error: ', e.message)
       })
   }
 
   render() {
-    const { users } = this.state
+    const { students } = this.props
 
     return (
       <div className="container">
         <h4 className="mb-4">Daftar Siswa</h4>
-        <Link to={'user/add'}>
+        <Link to={'student/add'}>
           <button type="button" className="btn btn-primary btn-sm mb-3">Tambah Siswa</button>
         </Link>
         <table className="table table-bordered table-striped">
@@ -63,23 +61,23 @@ export default class ListUser extends Component {
             </tr>
           </thead>
           <tbody>
-            {users && users.map((user, index) => (
+            {students && students.map((student, index) => (
               <tr key={index}>
               <th scope="row">{index+1}</th>
-              <td>{user.first_name + ' ' + user.last_name}</td>
-              <td>{dateFormat(user.birth, "dd-mm-yyyy")}</td>
-              <td>{user.height + '/' + user.weight}</td>
-              <td>{user.address}</td>
-              <td align="right"><NumberFormat value={user.parent_income} 
+              <td>{student.first_name + ' ' + student.last_name}</td>
+              <td>{dateFormat(student.birth, "dd-mm-yyyy")}</td>
+              <td>{student.height + '/' + student.weight}</td>
+              <td>{student.address}</td>
+              <td align="right"><NumberFormat value={student.parent_income} 
               displayType={'text'} thousandSeparator="." decimalSeparator="," prefix={'Rp.'}/></td>
               <td>
               <div className="btn-group" role="group" aria-label="Basic mixed styles example">
-                <Link to={"/user/" + user.id}>
+                <Link to={"/student/" + student.id}>
                   <button type="button" className="btn btn-warning btn-sm">Edit</button>
                 </Link>
                 <button type="button" className="btn btn-danger btn-sm" onClick={() => { 
-                if(window.confirm(`Yakin ingin menghapus ${user.first_name + ' ' + user.last_name}?`)) { 
-                  this.deleteUser(user.id) 
+                if(window.confirm(`Yakin ingin menghapus ${student.first_name + ' ' + student.last_name}?`)) { 
+                  this.deleteStudent(student.id) 
                 } }}>Hapus</button>
               </div>
               </td>
@@ -91,3 +89,11 @@ export default class ListUser extends Component {
     )
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    students: state.students
+  }
+}
+
+export default connect(mapStateToProps, { retrieveStudents, deleteStudent })(ListStudent)

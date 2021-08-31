@@ -1,8 +1,12 @@
 import React, { Component } from "react";
-import UserDataService from "../services/user.service";
+import StudentDataService from "../services/student.service";
 import NumberFormat from 'react-number-format';
 
-export default class AddUser extends Component {
+// redux
+import { connect } from 'react-redux'
+import { createStudent } from '../actions/student.action'
+
+class AddStudent extends Component {
   constructor(props) {
     super(props);
     this.onChangeFirstName = this.onChangeFirstName.bind(this);
@@ -13,8 +17,8 @@ export default class AddUser extends Component {
     this.onChangeWeight = this.onChangeWeight.bind(this);
     this.onChangeParentIncome = this.onChangeParentIncome.bind(this);
 
-    this.saveUser = this.saveUser.bind(this);
-    this.newUser = this.newUser.bind(this);
+    this.saveStudent = this.saveStudent.bind(this);
+    this.newStudent = this.newStudent.bind(this);
 
     this.state = {
       id: null,
@@ -59,7 +63,10 @@ export default class AddUser extends Component {
     this.setState({ parent_income: e.target.value });
   }
 
-  saveUser() {
+  saveStudent() {
+    let parent_income = this.state.parent_income.replace('Rp.', '').replaceAll('.', '')
+    if (parent_income == '') parent_income = 0
+
     var data = {
       first_name: this.state.first_name,
       last_name: this.state.last_name,
@@ -67,32 +74,51 @@ export default class AddUser extends Component {
       birth: this.state.birth.split("-").reverse().join("-"),
       height: this.state.height,
       weight: this.state.weight,
-      parent_income: this.state.parent_income.replace('Rp.', '').replaceAll('.', ''),
+      parent_income: parent_income,
     }
 
-    UserDataService.create(data)
+    this.props.createStudent(data)
       .then(res => {
         this.setState({
-          id: res.data.id,
-          first_name: res.data.first_name,
-          last_name: res.data.last_name,
-          address: res.data.address,
-          birth: res.data.birth,
-          height: res.data.height,
-          weight: res.data.weight,
-          parent_income: res.data.parent_income,
+          id: res.id,
+          first_name: res.first_name,
+          last_name: res.last_name,
+          address: res.address,
+          birth: res.birth,
+          height: res.height,
+          weight: res.weight,
+          parent_income: res.parent_income,
 
           submitted: true
         });
+        
       }).catch(e => {
-        if (e.response !== "") {
-          this.setState({errors: e.response.data})
-          console.log('validation', e.response.data)
-        }
-      });
+        console.log('error: ', e)
+      })
+
+    // StudentDataService.create(data)
+    //   .then(res => {
+    //     this.setState({
+    //       id: res.data.id,
+    //       first_name: res.data.first_name,
+    //       last_name: res.data.last_name,
+    //       address: res.data.address,
+    //       birth: res.data.birth,
+    //       height: res.data.height,
+    //       weight: res.data.weight,
+    //       parent_income: res.data.parent_income,
+
+    //       submitted: true
+    //     });
+    //   }).catch(e => {
+    //     if (e.response !== "") {
+    //       this.setState({errors: e.response.data})
+    //       console.log('validation', e.response.data)
+    //     }
+    //   });
   }
 
-  newUser() {
+  newStudent() {
     this.setState({
       id: null,
       first_name: "",
@@ -115,7 +141,7 @@ export default class AddUser extends Component {
         {this.state.submitted ? (
           <div>
             <h4>Kamu berhasil mendaftar!</h4>
-            <button className="btn btn-link" onClick={this.newUser}>
+            <button className="btn btn-link" onClick={this.newStudent}>
               Tambah Lagi
             </button>
           </div>
@@ -217,7 +243,7 @@ export default class AddUser extends Component {
               </div>
               <div className="invalid-feedback">{this.state.errors.weight}</div>
             </form>
-            <button onClick={this.saveUser} className="btn btn-success">
+            <button onClick={this.saveStudent} className="btn btn-success">
               Submit
             </button>
           </div>
@@ -226,3 +252,5 @@ export default class AddUser extends Component {
     )
   }
 }
+
+export default connect(null, { createStudent })(AddStudent)

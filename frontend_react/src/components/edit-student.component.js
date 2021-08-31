@@ -1,9 +1,13 @@
 import React, { Component } from "react";
-import UserDataService from "../services/user.service";
+import StudentDataService from "../services/student.service";
 import { Link } from "react-router-dom";
 import NumberFormat from 'react-number-format';
 
-export default class EditUser extends Component {
+// redux
+import { connect } from 'react-redux'
+import {updateStudent, deleteStudent } from '../actions/student.action'
+
+class EditStudent extends Component {
   constructor(props) {
     super(props);
     this.onChangeFirstName = this.onChangeFirstName.bind(this);
@@ -14,12 +18,12 @@ export default class EditUser extends Component {
     this.onChangeWeight = this.onChangeWeight.bind(this);
     this.onChangeParentIncome = this.onChangeParentIncome.bind(this);
 
-    this.getUser = this.getUser.bind(this);
-    this.updateUser = this.updateUser.bind(this);
-    this.deleteUser = this.deleteUser.bind(this);
+    this.getStudent = this.getStudent.bind(this);
+    this.updateStudent = this.updateStudent.bind(this);
+    this.deleteStudent = this.deleteStudent.bind(this);
 
     this.state = {
-      currentUser: {
+      currentStudent: {
         id: null,
         first_name: "",
         last_name: "",
@@ -35,13 +39,13 @@ export default class EditUser extends Component {
   }
 
   componentDidMount() {
-    this.getUser(this.props.match.params.id);
+    this.getStudent(this.props.match.params.id);
   }
 
   onChangeFirstName(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         first_name: e.target.value
       }
     }));
@@ -49,8 +53,8 @@ export default class EditUser extends Component {
 
   onChangeLastName(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         last_name: e.target.value
       }
     }));
@@ -58,8 +62,8 @@ export default class EditUser extends Component {
 
   onChangeAddress(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         address: e.target.value
       }
     }));
@@ -67,8 +71,8 @@ export default class EditUser extends Component {
 
   onChangeBirth(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         birth: e.target.value
       }
     }));
@@ -76,8 +80,8 @@ export default class EditUser extends Component {
 
   onChangeHeight(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         height: e.target.value
       }
     }));
@@ -85,8 +89,8 @@ export default class EditUser extends Component {
 
   onChangeWeight(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         weight: e.target.value
       }
     }));
@@ -94,22 +98,22 @@ export default class EditUser extends Component {
 
   onChangeParentIncome(e) {
     this.setState(prevState => ({
-      currentUser: {
-        ...prevState.currentUser,
+      currentStudent: {
+        ...prevState.currentStudent,
         parent_income: e.target.value
       }
     }));
   }
 
-  getUser(id) {
-    UserDataService.get(id)
+  getStudent(id) {
+    StudentDataService.get(id)
       .then(res => {
         const date = new Date(res.data.birth)
         const data = res.data
         data.birth = ("0" + date.getDate()).slice(-2) + '-'
           + ("0" + (date.getMonth() + 1)).slice(-2) + '-' + date.getFullYear()
         this.setState({
-          currentUser: data
+          currentStudent: data
         });
         console.log('res', data)
       })
@@ -118,49 +122,49 @@ export default class EditUser extends Component {
       })
   }
 
-  updateUser() {
+  updateStudent() {
+    let parent_income = this.state.currentStudent.parent_income.toString().replace('Rp.', '').replaceAll('.', '')
+    if (parent_income === '') parent_income = 0
+
     var data = {
-      id: this.state.currentUser.id,
-      first_name: this.state.currentUser.first_name,
-      last_name: this.state.currentUser.last_name,
-      address: this.state.currentUser.address,
-      birth: this.state.currentUser.birth.split("-").reverse().join("-"),
-      height: this.state.currentUser.height,
-      weight: this.state.currentUser.weight,
-      parent_income: this.state.currentUser.parent_income.replace('Rp.', '').replaceAll('.', ''),
+      id: this.state.currentStudent.id,
+      first_name: this.state.currentStudent.first_name,
+      last_name: this.state.currentStudent.last_name,
+      address: this.state.currentStudent.address,
+      birth: this.state.currentStudent.birth.split("-").reverse().join("-"),
+      height: this.state.currentStudent.height,
+      weight: this.state.currentStudent.weight,
+      parent_income: parent_income
     }
 
-    UserDataService.update(
-      this.state.currentUser.id,
-      data
-    ).then(res => {
+    this.props.updateStudent(this.state.currentStudent.id, data).then(res => {
       this.setState({
         message: "Data berhasil di update!"
       });
     }).catch(e => {
       if (e.response !== "") {
-        this.setState({ errors: e.response.data })
-        console.log('validation', e.response.data)
+        this.setState({ errors: e.response })
+        console.log('validation', e.response)
       }
     })
   }
 
-  deleteUser(id) {
-    UserDataService.delete(id)
-      .then(res => {
-        console.log(res.data);
-        this.props.history.push('/users');
-      }).catch(e => {
-        console.error(e);
-      })
+  deleteStudent(id) {
+    this.props.deleteStudent(id).then(res => {
+      alert('Berhasil hapus data')
+      this.props.history.goBack()
+    }).catch(e => {
+      console.log('error', e.message)
+      alert('Gagal hapus data.')
+    })
   }
 
   render() {
-    const { currentUser } = this.state
+    const { currentStudent } = this.state
 
     return (
       <div className="container">
-        {currentUser ? (
+        {currentStudent ? (
           <div className="edit-form">
             <h4 className="mb-4">Edit Siswa</h4>
             <hr />
@@ -173,7 +177,7 @@ export default class EditUser extends Component {
                   className={`form-control ${this.state.errors.first_name ? "is-invalid" : ''}`}
                   id="first_name"
                   required
-                  value={currentUser.first_name}
+                  value={currentStudent.first_name}
                   onChange={this.onChangeFirstName}
                   name="first_name"
                 />
@@ -187,7 +191,7 @@ export default class EditUser extends Component {
                   className={`form-control ${this.state.errors.last_name ? "is-invalid" : ''}`}
                   id="last_name"
                   required
-                  value={currentUser.last_name}
+                  value={currentStudent.last_name}
                   onChange={this.onChangeLastName}
                   name="last_name"
                 />
@@ -201,7 +205,7 @@ export default class EditUser extends Component {
                   className={`form-control ${this.state.errors.address ? "is-invalid" : ''}`}
                   id="address"
                   required
-                  value={currentUser.address}
+                  value={currentStudent.address}
                   onChange={this.onChangeAddress}
                   name="address"
                 />
@@ -214,7 +218,7 @@ export default class EditUser extends Component {
                   placeholder="TGL-BLN-THN" mask={['d', 'd', 'm', 'm', 'y', 'y', 'y', 'y']}
                   displayType="input"
                   className={`form-control ${this.state.errors.birth ? "is-invalid" : ''}`}
-                  required value={currentUser.birth}
+                  required value={currentStudent.birth}
                   onChange={this.onChangeBirth}
                 />
                 <div className="invalid-feedback">{this.state.errors.birth}</div>
@@ -227,7 +231,7 @@ export default class EditUser extends Component {
                   className={`form-control ${this.state.errors.height ? "is-invalid" : ''}`}
                   id="height"
                   required
-                  value={currentUser.height}
+                  value={currentStudent.height}
                   onChange={this.onChangeHeight}
                   name="height"
                 />
@@ -241,7 +245,7 @@ export default class EditUser extends Component {
                   className={`form-control ${this.state.errors.weight ? "is-invalid" : ''}`}
                   id="weight"
                   required
-                  value={currentUser.weight}
+                  value={currentStudent.weight}
                   onChange={this.onChangeWeight}
                   name="weight"
                 />
@@ -250,7 +254,7 @@ export default class EditUser extends Component {
 
               <div className="form-group mb-5">
                 <label htmlFor="parent_income" className="form-label">Penghasilan Orang Tua (optional)</label>
-                <NumberFormat value={currentUser.parent_income} displayType="input"
+                <NumberFormat value={currentStudent.parent_income} displayType="input"
                   className={`form-control ${this.state.errors.weight ? "is-invalid" : ''}`}
                   required onChange={this.onChangeParentIncome}
                   thousandSeparator="." decimalSeparator="," prefix={'Rp.'} />
@@ -259,16 +263,16 @@ export default class EditUser extends Component {
 
             {this.state.message ? (
               <div className="alert alert-success d-flex align-items-center" role="alert"><div>
-                {this.state.message}. Kembali ke <Link className="alert-link" to={'/users'}>Daftar Siswa</Link>
+                {this.state.message}. Kembali ke <Link className="alert-link" to={'/students'}>Daftar Siswa</Link>
               </div>
               </div>
             ) : ('')}
 
             <div className="mb-4">
-              <button className="btn btn-primary me-2" type="button" onClick={() => this.updateUser()}>Update</button>
+              <button className="btn btn-primary me-2" type="button" onClick={() => this.updateStudent()}>Update</button>
               <button className="btn btn-danger me-2" type="button" onClick={() => {
                 if (window.confirm(`Yakin ingin menghapus?`)) {
-                  this.deleteUser(currentUser.id)
+                  this.deleteStudent(currentStudent.id)
                 }
               }}>Hapus</button>
               <button className="btn btn-dark" type="button" onClick={() => this.props.history.goBack()}>Batal</button>
@@ -284,3 +288,5 @@ export default class EditUser extends Component {
     )
   }
 }
+
+export default connect(null, { updateStudent, deleteStudent })(EditStudent)
